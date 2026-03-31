@@ -1,0 +1,42 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      
+      - name: Publish
+        run: dotnet publish --configuration Release --no-restore --output ./publish
+      
+      - name: Zip release
+        run: |
+          cd publish
+          zip -r ../${{ github.event.repository.name }}.zip .
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ github.event.repository.name }}.zip
+          generate_release_notes: false
+          body: |
+            Release ${{ github.ref_name }} of shaedyLogger.
+            
+            Download the zip and extract it into your CounterStrikeSharp plugins directory.
